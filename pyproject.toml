@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "final-project-bladepyrunner"
+version = "0.1.0"  
+description = "Python package for wind resource assessment using ERA5 reanalysis data, analyzing multi-year hourly wind data to estimate key wind energy metrics and support wind energy project planning."
+authors = [
+    { name = "Rodrigo Sánchez Moreno" },
+    { name = "Max Rosendahl" },
+    { name = "Cristina Fente Gutiérrez" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "pandas"
+]
+
+[tool.setuptools]
+packages = ["src"]
+
+[project.scripts]
+bladepyrunners = "src.main:main"
