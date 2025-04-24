@@ -17,7 +17,11 @@ requires-python = ">=3.8"
 dependencies = [
     "numpy",
     "matplotlib",
-    "pandas"
+    "pandas",
+    "xarray",
+    "pathlib",
+    "datetime",
+    "cftime"
 ]
 
 [tool.setuptools]
