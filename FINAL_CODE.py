@@ -14,6 +14,22 @@ from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
 # %%
+# Define the output folder path
+output_folder = Path('outputs')
+
+# Clear the output folder before saving new plots, keeping only the .gitkeep file
+for file in output_folder.iterdir():
+    if file.is_file() and file.name != ".gitkeep":
+        file.unlink()
+
+# Function to save plots
+def save_plot(fig, title):
+    """Save the given figure to the output folder with the specified title."""
+    file_path = output_folder / f"{title.replace(' ', '_').replace('/', '_')}.png"
+    fig.savefig(file_path, dpi=300)
+    plt.close(fig)  # Close the figure to free memory
+
+# %%
 # Define the folder path containing the NetCDF files
 folder_path = Path('inputs\WindData')
 datasets = []  # List to store datasets
@@ -91,6 +107,7 @@ axes[1, 1].set_legend(title="Wind Speed (m/s)", loc='lower right')
 
 plt.tight_layout()
 plt.show()
+save_plot(fig, "Wind Rose Plots for Locations")
 
 # %%
 # Array to store mean wind speeds
@@ -121,7 +138,8 @@ def fit_weibull_and_store_mean(location_data, location_name):
     pdf_100 = weibull_min.pdf(x_100, shape_100, loc_100, scale_100)
     
     # Create subplots
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig_name = f"fig_{location_name}"
+    globals()[fig_name], axes = plt.subplots(1, 2, figsize=(14, 6))
     
     # Plot for 10m
     axes[0].hist(wind_speeds_10, bins=30, density=True, alpha=0.6, color='blue', label='Data')
@@ -141,6 +159,11 @@ def fit_weibull_and_store_mean(location_data, location_name):
     
     plt.tight_layout()
     plt.show()
+
+    # Save the plot
+    save_plot(globals()[fig_name], f"Weibull Fit for {location_name} at 10m and 100m")
+
+
 
 # Fit Weibull distribution and store mean speeds for each location
 fit_weibull_and_store_mean(Location_1, "Location 1 (7.75, 55.5)")
@@ -205,6 +228,22 @@ print("---------------------------------------------------------------------")
 print(f"Interpolated wind speed at 100m (first timestep): {interp_speed100[0]:.2f} m/s")
 print(f"Interpolated wind direction at 100m (first timestep): {interp_wd100[0]:.1f} degrees")
 
+# Save the interpolated wind speed and direction data to the output folder
+interpolated_data = pd.DataFrame({
+    'Time Step': np.arange(len(interp_speed10)),
+    'Wind Speed 10m (m/s)': interp_speed10,
+    'Wind Direction 10m (degrees)': interp_wd10,
+    'Wind Speed 100m (m/s)': interp_speed100,
+    'Wind Direction 100m (degrees)': interp_wd100
+})
+
+# Define the output file path
+output_file_path = output_folder / "interpolated_wind_data.csv"
+
+# Save the data to a CSV file
+interpolated_data.to_csv(output_file_path, index=False)
+
+print(f"Interpolated wind data saved to: {output_file_path}")
 
 # %%
 # Define the reference heights and target height
@@ -224,27 +263,54 @@ For WRA, it is more accurate to use the wind speed reference as close to the hub
 So the bes option is to use the wind speed at 100 m height.
 '''
 ### POWER LAW PROFILE ###
-# Compute wind profiles using z_ref_100 as the reference height
-u_location1 = mean_speeds[0]['mean_100m'] * (z / z_ref_100)**alpha
-u_location2 = mean_speeds[1]['mean_100m'] * (z / z_ref_100)**alpha
-u_location3 = mean_speeds[2]['mean_100m'] * (z / z_ref_100)**alpha
-u_location4 = mean_speeds[3]['mean_100m'] * (z / z_ref_100)**alpha
+def power_law_profile(mean_speed, z_ref, alpha, z):
+    """
+    Compute wind profile using the power law.
+
+    Args:
+        mean_speed (float): Mean wind speed at the reference height.
+        z_ref (float): Reference height.
+        alpha (float): Wind shear exponent.
+        z (array-like): Heights at which to compute the wind profile.
+
+    Returns:
+        array-like: Wind speeds at the specified heights.
+    """
+    return mean_speed * (z / z_ref)**alpha
+
+# Compute wind profiles using the function
+u_location1 = power_law_profile(mean_speeds[0]['mean_100m'], z_ref_100, alpha, z)
+u_location2 = power_law_profile(mean_speeds[1]['mean_100m'], z_ref_100, alpha, z)
+u_location3 = power_law_profile(mean_speeds[2]['mean_100m'], z_ref_100, alpha, z)
+u_location4 = power_law_profile(mean_speeds[3]['mean_100m'], z_ref_100, alpha, z)
 
 ### LOGARITHEMIC LAW PROFILE ###
-def offshore_wind_speed(z, u_ref, z_ref, z0):
+def logarithemic_law_profile(z, u_ref, z_ref, z0):
+    """
+    Compute the wind speed at a given height above the ground using the logarithmic wind profile.
+
+    Parameters:
+    z (float): The height above the ground where the wind speed is to be calculated (in meters).
+    u_ref (float): The reference wind speed measured at the reference height (in meters per second).
+    z_ref (float): The reference height above the ground where the reference wind speed is measured (in meters).
+    z0 (float): The surface roughness length, which characterizes the roughness of the terrain (in meters).
+
+    Returns:
+    float: The wind speed at the specified height z (in meters per second).
+    """
     """Compute wind speed at height z using logarithmic profile."""
     return u_ref * (np.log(z / z0) / np.log(z_ref / z0))
 
 # Compute wind profiles using z_ref_100 as the reference height
 z0=0.0002  # Roughness length for offshore wind (typical value, adjust as needed)
 
-u_location1_log = offshore_wind_speed(z, mean_speeds[0]['mean_100m'], z_ref_100, z0)
-u_location2_log = offshore_wind_speed(z, mean_speeds[1]['mean_100m'], z_ref_100, z0)
-u_location3_log = offshore_wind_speed(z, mean_speeds[2]['mean_100m'], z_ref_100, z0)
-u_location4_log = offshore_wind_speed(z, mean_speeds[3]['mean_100m'], z_ref_100, z0)
+u_location1_log = logarithemic_law_profile(z, mean_speeds[0]['mean_100m'], z_ref_100, z0)
+u_location2_log = logarithemic_law_profile(z, mean_speeds[1]['mean_100m'], z_ref_100, z0)
+u_location3_log = logarithemic_law_profile(z, mean_speeds[2]['mean_100m'], z_ref_100, z0)
+u_location4_log = logarithemic_law_profile(z, mean_speeds[3]['mean_100m'], z_ref_100, z0)
 
 
-plt.figure(figsize=(10, 6))
+fig = plt.figure(figsize=(10, 6))
 
 # Plot wind profiles using z_ref_100 as the reference height
 plt.plot(u_location1, z, label='Location 1 (power law)', color='blue')
@@ -252,17 +318,19 @@ plt.plot(u_location2, z, label='Location 2 (power law)', color='green')
 plt.plot(u_location3, z, label='Location 3 (power law)', color='red')
 plt.plot(u_location4, z, label='Location 4 (power law)', color='orange')
 
-plt.plot(u_location1_log, z,'--', label='Location 1 (logarithemic law)', color='blue')
-plt.plot(u_location2_log, z,'--', label='Location 2 (logarithemic law)', color='green')
-plt.plot(u_location3_log, z,'--', label='Location 3 (logarithemic law)', color='red')
-plt.plot(u_location4_log, z,'--', label='Location 4 (logarithemic law)', color='orange')
+plt.plot(u_location1_log, z, '--', label='Location 1 (logarithmic law)', color='blue')
+plt.plot(u_location2_log, z, '--', label='Location 2 (logarithmic law)', color='green')
+plt.plot(u_location3_log, z, '--', label='Location 3 (logarithmic law)', color='red')
+plt.plot(u_location4_log, z, '--', label='Location 4 (logarithmic law)', color='orange')
 
 plt.xlabel('Wind Speed (m/s)')
 plt.ylabel('Height (m)')
 plt.title('Wind Speed Profiles at Different Locations, Power Law vs Logarithmic Law')
 plt.legend()
 plt.grid()
-plt.show()
+
+# Save the plot
+save_plot(fig, "Wind Speed Profiles at Different Locations")
 
 # Compute wind speed at z_target for each location using the power law profile
 Location_1[f'ws_{z_target}'] = mean_speeds[0]['mean_10m'] * (z_target / z_ref_10)**alpha
@@ -277,15 +345,32 @@ print(f"Location 2: {Location_2[f'ws_{z_target}'].values[0]} m/s")
 print(f"Location 3: {Location_3[f'ws_{z_target}'].values[0]} m/s")
 print(f"Location 4: {Location_4[f'ws_{z_target}'].values[0]} m/s")
 
+# Save the wind speed at z_target for each location to a CSV file
+wind_speed_target_data = pd.DataFrame({
+    'Location': ['Location 1', 'Location 2', 'Location 3', 'Location 4'],
+    f'Wind Speed at {z_target}m (m/s)': [
+        Location_1[f'ws_{z_target}'].values[0],
+        Location_2[f'ws_{z_target}'].values[0],
+        Location_3[f'ws_{z_target}'].values[0],
+        Location_4[f'ws_{z_target}'].values[0]
+    ]
+})
 
+# Define the output file path
+output_file_path_target = output_folder / f"wind_speed_at_{z_target}m.csv"
+
+# Save the data to a CSV file
+wind_speed_target_data.to_csv(output_file_path_target, index=False)
+
+print(f"Wind speed at {z_target}m saved to: {output_file_path_target}")
 
 # %%
 # Fit Weibull distribution for wind speed at 100m height, using the extrapolated ws and wd data calculated before
 k_ext, loc_100, A_ext = weibull_min.fit(interp_speed100, floc=0)  # Fix location to 0
 u_mean_ext = A_ext * gamma(1 + 1 / k_ext)  # Calculate mean speed for 100m
 
-# Compute wind speed at z_target using the power law profile
-ws_z_target = u_mean_ext * (z_target / z_ref_100) ** alpha
+# Compute wind speed at z_target using the logarithemic law profile
+ws_z_target = power_law_profile(u_mean_ext, z_ref_100, alpha, z_target)
 
 # Display results
 print(f'Weibull parameters at 100m: k={k_ext:.2f}, A={A_ext:.2f}, mean={u_mean_ext:.2f}m/s')
@@ -296,7 +381,7 @@ x_100 = np.linspace(interp_speed100.min(), interp_speed100.max(), 100)
 pdf_100 = weibull_min.pdf(x_100, k_ext, loc_100, A_ext)
 
 # Create a plot for the Weibull distribution at 100m
-plt.figure(figsize=(8, 6))
+fig = plt.figure(figsize=(8, 6))
 plt.hist(interp_speed100, bins=30, density=True, alpha=0.6, color='green', label='Data')
 plt.plot(x_100, pdf_100, 'r-', label=f'Weibull Fit\nk={k_ext:.2f}, A={A_ext:.2f}, mean={u_mean_ext:.2f} m/s')
 plt.title('Weibull Distribution at 100m, at target location')
@@ -306,6 +391,7 @@ plt.legend()
 plt.grid()
 plt.tight_layout()
 plt.show()
+save_plot(fig, "Weibull Distribution at 100m, at target location")
 
 
 # %%
@@ -337,6 +423,7 @@ ax.bar(wd_target, ws_target, normed=True, opening=0.8, edgecolor='white')
 ax.set_title(f'Wind Rose at Target Location and Height ({z_target} m)')
 ax.set_legend(title="Wind Speed (m/s)", loc='lower right')
 plt.show()
+save_plot(fig, f'Wind Rose at Target Location and Height ({z_target} m)')
 
 
 # %%
@@ -386,4 +473,16 @@ AEP_NREL_5MW = calculate_aep(NREL_5MW_PC_func, k, A, np.min(NREL_5MW['Wind Speed
 print(f"Annual Energy Production (AEP) with NREL 15MW: {AEP_NREL_15MW:.2f} GWh/year")
 print(f"Annual Energy Production (AEP) with NREL 5MW: {AEP_NREL_5MW:.2f} GWh/year")
 
+# Save the AEP results to a CSV file
+aep_data = pd.DataFrame({
+    'Turbine': ['NREL 15MW', 'NREL 5MW'],
+    'AEP (GWh/year)': [AEP_NREL_15MW, AEP_NREL_5MW]
+})
 
+# Define the output file path
+aep_output_file_path = output_folder / "AEP_results.csv"
+
+# Save the data to a CSV file
+aep_data.to_csv(aep_output_file_path, index=False)
+
+print(f"AEP results saved to: {aep_output_file_path}")
