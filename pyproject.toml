@@ -29,3 +29,6 @@ packages = ["src"]
 
 [project.scripts]
 bladepyrunners = "src.main:main"
+
+[project.urls]
+Repository = "https://github.com/DTUWindEducation/final-project-bladepyrunner.git"
