@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 
 # %%
 # Define the output folder path
-output_folder = Path('outputs')
+output_folder = Path('..\outputs')
 
 # Clear the output folder before saving new plots, keeping only the .gitkeep file
 for file in output_folder.iterdir():
@@ -30,23 +30,8 @@ def save_plot(fig, title):
     plt.close(fig)  # Close the figure to free memory
 
 # %%
-# Define the folder path containing the NetCDF files
-folder_path = Path('inputs\WindData')
-datasets = []  # List to store datasets
-
-for file in folder_path.iterdir():
-    ds = xr.open_dataset(file)  # Open each NetCDF file
-    datasets.append(ds)  # Store dataset in list
-
-# Concatenate along a specific dimension (e.g., 'time' if it exists)
-combined_ds = xr.concat(datasets, dim='valid_time')
-
-# Convert the combined dataset to a pandas DataFrame
-WindData = combined_ds.to_dataframe().reset_index()
-
-# %%
 # Define the folder path containing the other NetCDF files
-folder_path = Path('inputs\correct_wind_data')
+folder_path = Path('..\inputs\WindData')
 new_datasets = []  # List to store datasets
 
 for file in folder_path.iterdir():
@@ -57,30 +42,25 @@ for file in folder_path.iterdir():
 new_combined_ds = xr.concat(new_datasets, dim='time')
 
 # Convert the combined dataset to a pandas DataFrame
-NewData = new_combined_ds.to_dataframe().reset_index()
+WindData = new_combined_ds.to_dataframe().reset_index()
 
-NewData['time'] = NewData['valid_time']
-NewData = NewData.drop(columns=['valid_time'])
-NewData = NewData.rename(columns={'time': 'valid_time'})
-NewData = NewData.drop(columns=['step'])
-NewData = NewData.drop(columns=['surface'])
+WindData['time'] = WindData['valid_time']
+WindData = WindData.drop(columns=['valid_time'])
+WindData = WindData.rename(columns={'time': 'valid_time'})
+WindData = WindData.drop(columns=['step'])
+WindData = WindData.drop(columns=['surface'])
 
-WindData = pd.concat([NewData, WindData], ignore_index=True)
-# %%
-# Display the combined dataset
-WindData
+# # Convert all columns except the first to numeric, coercing errors to NaN
+WindData.iloc[:, 1:] = WindData.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+# Drop rows with NaN values
+WindData = WindData.dropna()
 
 # %%
 # Separate the wind speeds in the four different points, using the latitude and longitude information
 
 WindData = WindData.rename(columns={'number': 'location'}) # Change the meaning of the existing column 'number' which was not being used
 
-WindData['location'] = list(zip(WindData['latitude'], WindData['longitude'])) # Combines latitude and longitude on the column location
-
-
-
-# %%
-WindData
+WindData['location'] = list(zip(WindData['longitude'], WindData['latitude'])) # Combines latitude and longitude on the column location
 
 # %%
 # Convert from cartessian cordinates of velocity to polar coordinates to obtain wind direction and speed, for every location
@@ -98,9 +78,6 @@ Location_1 = WindData[WindData['location'] == (7.75, 55.5)]
 Location_2 = WindData[WindData['location'] == (8, 55.5)]
 Location_3 = WindData[WindData['location'] == (7.75, 55.75)]
 Location_4 = WindData[WindData['location'] == (8, 55.75)]
-
-Location_1
-
 
 # %%
 # Create a 2x2 subplot for wind rose plots
@@ -405,7 +382,7 @@ pdf_100 = weibull_min.pdf(x_100, k_ext, loc_100, A_ext)
 fig = plt.figure(figsize=(8, 6))
 plt.hist(interp_speed100, bins=30, density=True, alpha=0.6, color='green', label='Data')
 plt.plot(x_100, pdf_100, 'r-', label=f'Weibull Fit\nk={k_ext:.2f}, A={A_ext:.2f}, mean={u_mean_ext:.2f} m/s')
-plt.title('Weibull Distribution at 100m, at target location')
+plt.title(f'Weibull Distribution at 100m, at target location {target}')
 plt.xlabel('Wind Speed (m/s)')
 plt.ylabel('Density')
 plt.legend()
@@ -448,8 +425,8 @@ save_plot(fig, f'Wind Rose at Target Location and Height ({z_target} m)')
 
 
 # %%
-NREL_15MW_path = Path(r'inputs\NREL_Reference_15MW_240.csv')
-NREL_5MW_path = Path(r'inputs\NREL_Reference_5MW_126.csv')
+NREL_15MW_path = Path(r'..\inputs\NREL_Reference_15MW_240.csv')
+NREL_5MW_path = Path(r'..\inputs\NREL_Reference_5MW_126.csv')
 
 NREL_15MW = pd.read_csv(NREL_15MW_path, sep=',', header=0)
 NREL_5MW = pd.read_csv(NREL_5MW_path, sep=',', header=0)
