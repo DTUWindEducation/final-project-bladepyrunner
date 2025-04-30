@@ -44,7 +44,28 @@ combined_ds = xr.concat(datasets, dim='valid_time')
 # Convert the combined dataset to a pandas DataFrame
 WindData = combined_ds.to_dataframe().reset_index()
 
+# %%
+# Define the folder path containing the other NetCDF files
+folder_path = Path('inputs\correct_wind_data')
+new_datasets = []  # List to store datasets
 
+for file in folder_path.iterdir():
+    ds = xr.open_dataset(file)  # Open each NetCDF file
+    new_datasets.append(ds)  # Store dataset in list
+
+# Concatenate along a specific dimension (e.g., 'time' if it exists)
+new_combined_ds = xr.concat(new_datasets, dim='time')
+
+# Convert the combined dataset to a pandas DataFrame
+NewData = new_combined_ds.to_dataframe().reset_index()
+
+NewData['time'] = NewData['valid_time']
+NewData = NewData.drop(columns=['valid_time'])
+NewData = NewData.rename(columns={'time': 'valid_time'})
+NewData = NewData.drop(columns=['step'])
+NewData = NewData.drop(columns=['surface'])
+
+WindData = pd.concat([NewData, WindData], ignore_index=True)
 # %%
 # Display the combined dataset
 WindData
