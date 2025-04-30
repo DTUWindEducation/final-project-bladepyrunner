@@ -66,9 +66,6 @@ NewData = NewData.drop(columns=['step'])
 NewData = NewData.drop(columns=['surface'])
 
 WindData = pd.concat([NewData, WindData], ignore_index=True)
-# %%
-# Display the combined dataset
-WindData
 
 # %%
 # Separate the wind speeds in the four different points, using the latitude and longitude information
@@ -76,11 +73,6 @@ WindData
 WindData = WindData.rename(columns={'number': 'location'}) # Change the meaning of the existing column 'number' which was not being used
 
 WindData['location'] = list(zip(WindData['latitude'], WindData['longitude'])) # Combines latitude and longitude on the column location
-
-
-
-# %%
-WindData
 
 # %%
 # Convert from cartessian cordinates of velocity to polar coordinates to obtain wind direction and speed, for every location
@@ -98,9 +90,6 @@ Location_1 = WindData[WindData['location'] == (7.75, 55.5)]
 Location_2 = WindData[WindData['location'] == (8, 55.5)]
 Location_3 = WindData[WindData['location'] == (7.75, 55.75)]
 Location_4 = WindData[WindData['location'] == (8, 55.75)]
-
-Location_1
-
 
 # %%
 # Create a 2x2 subplot for wind rose plots
