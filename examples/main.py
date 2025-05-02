@@ -16,7 +16,7 @@ u100 = ds['u100'].values
 clean_u100 = u100[~np.isnan(u100)]
 v100 = ds['v100'].values
 clean_v100 = v100[~np.isnan(v100)]
-# Step 2: Calculate the wind speed and direction
+# Step 2: Calculate the wind speed and direction for all locations
 print('Calculating wind speed and direction...')
 wind_speed_10, wind_dir_10 = compute_speed_direction(clean_u10, clean_v10)
 wind_speed_100, wind_dir_100 = compute_speed_direction(clean_u100, clean_v100)
