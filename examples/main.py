@@ -1,12 +1,8 @@
 import pandas as pd
-import xarray as xr
 import numpy as np
 from pathlib import Path
-import datetime
-from cftime import num2date
-from src import load_nc_files, compute_speed_direction, interpolate_with_xarray, power_law_calculation, fit_weibull, plot_weibuill
-
-#Step 1: Load the wind data from the NetCDF files
+from src import load_nc_files, compute_speed_direction, interpolate_wind_data, power_law_calculation, fit_weibull, plot_weibull, plot_windrose, compute_aep, compute_capacity_factor, compute_mean_wind_speed
+# Step 1: Load the wind data from the NetCDF files
 print('Loading the wind data...')
 
 data_dir = Path('inputs/WindData')
@@ -20,35 +16,80 @@ u100 = ds['u100'].values
 clean_u100 = u100[~np.isnan(u100)]
 v100 = ds['v100'].values
 clean_v100 = v100[~np.isnan(v100)]
-#Step 2: Calculate the wind speed and direction
+# Step 2: Calculate the wind speed and direction for all locations
 print('Calculating wind speed and direction...')
 wind_speed_10, wind_dir_10 = compute_speed_direction(clean_u10, clean_v10)
 wind_speed_100, wind_dir_100 = compute_speed_direction(clean_u100, clean_v100)
-#Step 3: Finding Wind Speeds inside the target area using interpolation
+# Step 3: Finding Wind Speeds inside the target area using interpolation
 print('Interpolating wind speeds to the target area...')
-interpolated_data = interpolate_with_xarray(ds, target_lat=7.8, target_lon=55.55)
+interpolated_data = interpolate_wind_data(ds, target_lat=55.5, target_lon=7.8)
 
-interpolated_u10 = interpolated_data['u10'].values
-interpolated_v10 = interpolated_data['v10'].values
-interpolated_u100 = interpolated_data['u100'].values
-interpolated_v100 = interpolated_data['v100'].values
+# Access the variables
+print(f'Wind speed at 10m: {interpolated_data["wind_speed_10"].values}')
+print(f'Wind direction at 10m: {interpolated_data["wind_dir_10"].values}')
+print(f'Wind speed at 100m: {interpolated_data["wind_speed_100"].values}')
+print(f'Wind direction at 100m: {interpolated_data["wind_dir_100"].values}')
 
-#calculating the wind speed and direction for the interpolated data
-interpolated_wind_speed_10, interpolated_wind_dir_10 = compute_speed_direction(interpolated_u10, interpolated_v10)
-interpolated_wind_speed_100, interpolated_wind_dir_100 = compute_speed_direction(interpolated_u100, interpolated_v100)
-
-#Step 4. Calculating wind speeds at different heights using the power law profile
+# Step 4. Calculating wind speeds at different heights using the power law profile
 print('Calculating wind speeds at different heights using the power law profile...')
 z_ref = 10  # Reference height (m)
 u_ref = wind_speed_10  # Wind speed at reference height (m/s)
 z = 80  # Height at which to calculate wind speed (m)
 u_80 = power_law_calculation(z_ref, u_ref, z)
 
-#Step 5: Fitting the Weibull distribution to the wind speed data
+# Step 5: Fitting the Weibull distribution to the wind speed data
 print('Fitting the Weibull distribution to the wind speed data...')
-shape, loc, scale = fit_weibull(u_80)
+shape, loc, scale = fit_weibull(ds, 55.5, 8, 10)
 print(f"Weibull parameters: shape={shape}, loc={loc}, scale={scale}")
 
-#Step 6: Plotting the Weibull distribution
+# Step 6: Plotting the Weibull distribution
 print('Plotting the Weibull distribution...')
-plot_weibuill(u_80, shape, scale)
+plot_weibull(ds, 55.5, 8, height=10)
+
+# Step 7: Plotting the wind rose
+print('Plotting the wind rose...')
+plot_windrose(ds, 55.5, 8, height=10)
+
+# Step 8: Calculating the AEP
+print('Calculating the AEP...')
+power_curve_file = Path('inputs/power_curve/NREL_Reference_5MW_126.csv')
+aep = compute_aep(ds, 55.5, 8, power_curve_file, year=2007, turbine='NREL5MW')
+
+print(f"Annual Energy Production (AEP): {aep} GWh")
+
+# Additional Function 1: Compute Capacity Factor
+print('Calculating the Capacity Factor...')
+rated_power = 5  # MW
+capacity_factor = compute_capacity_factor(aep, rated_power)
+print(f"Capacity Factor: {capacity_factor:.2%}")
+
+# Additional Function 2: Compute Mean Wind Speeds
+print('Calculating the Mean Wind Speeds...')
+mean_wind_speed_10 = compute_mean_wind_speed(ds, 55.5, 8, 10)
+print(f"Mean Wind Speed at 10m: {mean_wind_speed_10:.2f} m/s")
+
+
+# Create a dictionary of results
+results = {
+    'Weibull Shape': [shape],
+    'Weibull Loc': [loc],
+    'Weibull Scale': [scale],
+    'AEP (GWh)': [aep],
+    'Capacity Factor': [capacity_factor],
+    'Mean Wind Speed at 10m (m/s)': [mean_wind_speed_10],
+    'Interpolated Wind Speed at 10m (m/s)': [interpolated_data["wind_speed_10"].values],
+    'Interpolated Wind Direction at 10m (degrees)': [interpolated_data["wind_dir_10"].values],
+    'Interpolated Wind Speed at 100m (m/s)': [interpolated_data["wind_speed_100"].values],
+    'Interpolated Wind Direction at 100m (degrees)': [interpolated_data["wind_dir_100"].values],
+}
+
+# Convert the dictionary to a pandas DataFrame
+df_results = pd.DataFrame(results)
+
+# Define the output file path
+output_file = Path('outputs/wind_resource_assessment_results.csv')
+
+# Save the results to a CSV file
+df_results.to_csv(output_file, index=False)
+
+print(f"Results saved to {output_file}")
