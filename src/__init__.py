@@ -64,7 +64,6 @@ def interpolate_wind_data(ds, target_lat, target_lon):
     u100 = interpolated_ds['u100']
     v100 = interpolated_ds['v100']
 
-
     # Compute wind speed and direction
     wind_speed_10, wind_dir_10 = compute_speed_direction(u10.values, v10.values)
     wind_speed_100, wind_dir_100 = compute_speed_direction(u100.values, v100.values)
@@ -103,7 +102,7 @@ def power_law_calculation(z_ref, u_ref, z, alpha=1/7):
 
 def fit_weibull(ds, lat, lon, height):
     """
-    Interpolates wind data to a specified location and height, 
+    Interpolates wind data to a specified location and height,
     computes wind speed, and fits a Weibull distribution.
 
     Parameters:
@@ -199,8 +198,9 @@ def plot_weibull(ds, lat, lon, height, alpha=1/7):
 
 def plot_windrose(ds, lat, lon, height, alpha=1/7):
     """
-    Interpolates wind data to a location and height, computes wind speed and direction, and plots a windrose.
-    
+    Interpolates wind data to a location and height, computes wind speed
+    and direction, and plots a windrose.
+
     Parameters:
     ds: xarray.Dataset
         Dataset containing wind data (u10, v10, u100, v100)
@@ -212,8 +212,7 @@ def plot_windrose(ds, lat, lon, height, alpha=1/7):
             Height at which to calculate wind speed and direction (in meters)
         alpha: float
             Power law exponent (default: 1/7)
-        
-    
+
     Outputs:
     -Windrose plot at the specified location and height.
     """
@@ -258,7 +257,7 @@ def plot_windrose(ds, lat, lon, height, alpha=1/7):
 def compute_aep(ds, lat, lon, power_curve_file, year, turbine):
     """
     Computes the Annual Energy Production (AEP) for a given location and year.
-    
+
     Parameters:
     - ds (xarray.Dataset): The dataset containing wind data.
     - lat (float): Latitude of the target location.
@@ -266,7 +265,7 @@ def compute_aep(ds, lat, lon, power_curve_file, year, turbine):
     - power_curve_file (str): Path to the power curve CSV file.
     - year (int): Year for which to compute AEP.
     - turbine (str): Type of turbine ('NREL5MW' or 'NREL15MW').
-    
+
     Outputs:
     - aep_mwh (float): Annual Energy Production in GWh.
     """
@@ -341,7 +340,7 @@ def compute_mean_wind_speed(ds, lat, lon, height):
     lat, lon : float
         Location coordinates.
     height : float
-        Height (in meters) at which to compute wind speed 
+        Height (in meters) at which to compute wind speed
         (10, 100, or in-between).
 
     Returns:

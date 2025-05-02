@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from src import load_nc_files, compute_speed_direction, interpolate_wind_data, power_law_calculation, fit_weibull, plot_weibull, plot_windrose, compute_aep, compute_capacity_factor, compute_mean_wind_speed
-#Step 1: Load the wind data from the NetCDF files
+# Step 1: Load the wind data from the NetCDF files
 print('Loading the wind data...')
 
 data_dir = Path('inputs/WindData')
