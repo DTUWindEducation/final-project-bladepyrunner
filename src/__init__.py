@@ -19,7 +19,7 @@ def load_nc_files(data_dir):
     for file in sorted(os.listdir(data_dir)):
         if file.endswith(".nc"):
             datasets.append(xr.open_dataset(os.path.join(data_dir, file)))
-    WindData = xr.concat(datasets, dim='time')
+    WindData = xr.concat(datasets, dim='time', coords="minimal", compat='override')
     return WindData
 
 
