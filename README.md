@@ -37,17 +37,18 @@ python -m examples.main
 
 ## Architecture
 
+```bash
 bladepyrunner/
-├── inputs/                
+├── inputs/
 │   ├── NREL_Reference_5MW_126.csv
 │   ├── NREL_Reference_15MW_240.csv
-│   └── WindData/          
-├── outputs/               # Generated figures and outputs
-├── src/                   # Core package code
-│   ├── __init__.py        
-│   └── turbine.py         
-├── tests/                 
-├── examples/              # Usage demos
+│   └── WindData/
+├── outputs/              # Generated figures and outputs
+├── src/                  # Core package code
+│   ├── __init__.py
+│   └── turbine.py
+├── tests/
+├── examples/             # Usage demos
 │   ├── main.py
 │   ├── FINAL_CODE.py
 │   ├── main_code.ipynb
@@ -57,6 +58,7 @@ bladepyrunner/
 ├── Collaboration.md
 ├── README.md
 └── pyproject.toml
+```
 
 ### High-Level Workflow
         +---------------------+
@@ -122,3 +124,9 @@ Core functions used across the analysis pipeline:
 - `fit_weibull()` / `plot_weibull()` – Fit and visualize a Weibull distribution from wind data  
 - `compute_aep()` / `compute_capacity_factor()` – Estimate energy production and efficiency  
 - `plot_windrose()` – Generate wind rose visualizations of wind patterns
+
+## Team contributions
+
+- Rodrigo Sanchez Moreno
+- Max Rosendahl
+- Cristina Fente Gutierrez
