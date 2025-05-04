@@ -26,7 +26,7 @@ class WindTurbine:
         """
         return self._interp_func(wind_speeds)
 
-    def compute_AEP(self, wind_speed_pdf: callable, u_min: float, u_max: float, eta: float = 1.0) -> float:
+    def compute_aep(self, wind_speed_pdf: callable, u_min: float, u_max: float, eta: float = 1.0) -> float:
         """
         Computes Annual Energy Production (AEP) using the provided wind speed probability density function.
 

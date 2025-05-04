@@ -15,7 +15,8 @@ from scipy.interpolate import interp1d
 
 # %%
 # Define the output folder path
-output_folder = Path('..\outputs')
+output_folder = Path("../outputs")
+
 
 # Clear the output folder before saving new plots, keeping only the .gitkeep file
 for file in output_folder.iterdir():
