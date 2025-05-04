@@ -1,31 +1,124 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/zjSXGKeR)
-
-The README file should contains:
-
-A brief overview of the package objective.
-Installation instructions.
-A description of the package architecture, with at least one diagram.
-A description of the class(es) you have implemented in your package, with clear reference to the file name of the code inside src.
-A description of what peer review (if any) you have implemented.
-We should be able to install your package successfully following the Installation instruction in your README.md.
-
-
-# Our Great Package
-
-Team: [ADD TEXT HERE!]
+**Team**: BladePYrunners 
 
 ## Overview
 
-[ADD TEXT HERE!]
+**bladepyrunner** is a Python package designed to analyze wind resource data and estimate the performance of wind turbines. Using wind datasets in NetCDF or CSV format, the package computes wind speed distributions, interpolates wind vectors to geographic coordinates, and estimates turbine performance metrics such as:
+
+- Annual Energy Production (AEP)
+- Capacity Factor
+- Mean Wind Speed
+
+It supports interpolation at custom hub heights and includes preconfigured turbine models like the NREL 5MW and 15MW.
+
+---
 
 ## Quick-start guide
 
-[ADD TEXT HERE!]
+To install and run the package locally:
+
+```bash
+git clone https://github.com/your-username/bladepyrunner.git
+cd bladepyrunner
+``` 
+Create and activate a virtual environment (recommended):
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+Install the package in editable mode:
+```bash
+pip install -e .
+```
+Run the example code:
+```bash
+python -m examples.main
+```
 
 ## Architecture
 
-[ADD TEXT HERE!]
+bladepyrunner/
+├── inputs/                
+│   ├── NREL_Reference_5MW_126.csv
+│   ├── NREL_Reference_15MW_240.csv
+│   └── WindData/          
+├── outputs/               # Generated figures and outputs
+├── src/                   # Core package code
+│   ├── __init__.py        
+│   └── turbine.py         
+├── tests/                 
+├── examples/              # Usage demos
+│   ├── main.py
+│   ├── FINAL_CODE.py
+│   ├── main_code.ipynb
+│   └── wind_data_class.py
+├── .gitignore
+├── LICENSE
+├── Collaboration.md
+├── README.md
+└── pyproject.toml
 
-## Peer review
+### High-Level Workflow
+        +---------------------+
+        |  Wind Data (NetCDF) |
+        +---------+-----------+
+                  |
+                  v
+        +---------+-----------+
+        | load_nc_files()     |
+        | interpolate_wind... |
+        +---------+-----------+
+                  |
+                  v
+     +------------+-------------+
+     |  Wind speed & direction |
+     +------------+-------------+
+                  |
+         +--------+--------+
+         |  Analysis Tools |
+         |  (AEP, Weibull, |
+         |   windrose...)  |
+         +--------+--------+
+                  |
+        +---------+---------+
+        | Visualization &   |
+        | Summary Metrics   |
+        +-------------------+
 
-[ADD TEXT HERE!]
+
+## Classes and Key Files
+
+### `turbine.py` (in `src/`)
+
+Defines the `WindTurbine` class, which models a turbine using its power curve and enables AEP (Annual Energy Production) computation from wind data.
+
+#### `WindTurbine` class
+
+- **Constructor**  
+  `WindTurbine(name, hub_height, filepath)`  
+  Initializes the turbine with:
+  - `name` (str): Turbine model name  
+  - `hub_height` (float): Hub height in meters  
+  - `filepath` (str): Path to a CSV file with columns `wind_speed` and `power`
+
+- **`get_power(wind_speeds)`**  
+  Returns the interpolated power output (in kW) for a NumPy array of wind speeds.
+
+- **`compute_AEP(wind_speed_pdf, u_min, u_max, eta=1.0)`**  
+  Computes the **Annual Energy Production (AEP)** using a wind speed probability density function (PDF).
+  - `u_min`, `u_max`: Cut-in and cut-out wind speeds  
+  - `eta`: Turbine availability (default = 1.0)  
+  Returns AEP in **kWh/year**.
+
+---
+
+### Functions in `__init__.py` (in `src/`)
+
+Core functions used across the analysis pipeline:
+
+- `load_nc_files()` – Load NetCDF climate data  
+- `interpolate_wind_data()` – Interpolate wind speeds at a given hub height  
+- `compute_speed_direction()` – Calculate wind speed and direction from U/V components  
+- `fit_weibull()` / `plot_weibull()` – Fit and visualize a Weibull distribution from wind data  
+- `compute_aep()` / `compute_capacity_factor()` – Estimate energy production and efficiency  
+- `plot_windrose()` – Generate wind rose visualizations of wind patterns
