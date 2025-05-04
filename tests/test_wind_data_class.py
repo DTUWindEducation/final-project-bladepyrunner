@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from datetime import datetime
-from your_module_path.wind_data_class import WindData  # Update this import path
+from wind_data_class import WindData
 
 @pytest.fixture
 def sample_dataframe():
