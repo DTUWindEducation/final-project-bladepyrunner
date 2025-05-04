@@ -1,5 +1,5 @@
 import pytest
-from src.Capacity_Factor_Calculator import CapacityFactorCalculator  # Adjust the import path
+from src.Capacity_Factor_Class import CapacityFactorCalculator  # Adjust the import path
 
 def test_capacity_factor_calculator():
     calculator = CapacityFactorCalculator(rated_power_mw=5)
