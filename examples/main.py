@@ -4,7 +4,7 @@ from pathlib import Path
 from scipy.stats import weibull_min
 from scipy.integrate import quad
 from src import load_nc_files, compute_speed_direction, interpolate_wind_data, power_law_calculation, fit_weibull, plot_weibull, plot_windrose, compute_aep, compute_capacity_factor, compute_mean_wind_speed
-from src.turbine import WindTurbine
+from src.Capacity_Factor_Class import CapacityFactorCalculator
 import sys
 from pathlib import Path
 
@@ -52,15 +52,6 @@ u_80 = power_law_calculation(z_ref, u_ref, z)
 print('Fitting the Weibull distribution to the wind speed data...')
 shape, loc, scale = fit_weibull(ds, 55.5, 8, 10)
 print(f"Weibull parameters: shape={shape}, loc={loc}, scale={scale}")
-# Define wind speed PDF using Weibull distribution
-def weibull_pdf(u):
-    return weibull_min.pdf(u, shape, loc, scale)
-# Instantiate the WindTurbine object
-turbine_5MW = WindTurbine(
-    name="NREL 5 MW",
-    hub_height=90,
-    filepath="inputs/power_curve/NREL_Reference_5MW_126.csv"
-)
 
 # Step 6: Plotting the Weibull distribution
 print('Plotting the Weibull distribution...')
@@ -70,18 +61,18 @@ plot_weibull(ds, 55.5, 8, height=10)
 print('Plotting the wind rose...')
 plot_windrose(ds, 55.5, 8, height=10)
 
+
 # Step 8: Calculating the AEP
 print('Calculating the AEP...')
-aep = turbine_5MW.compute_AEP(wind_speed_pdf=weibull_pdf, u_min=3, u_max=25, eta=0.95)
-aep = aep / 1e6  # convert Wh to GWh
-print(f"Annual Energy Production (AEP): {aep:.2f} GWh")
+power_curve_file = Path('inputs/power_curve/NREL_Reference_5MW_126.csv')
+aep = compute_aep(ds, 55.5, 8, power_curve_file, year=2007, turbine='NREL5MW')
 
+print(f"Annual Energy Production (AEP): {aep} GWh")
 # Additional Function 1: Compute Capacity Factor
 print('Calculating the Capacity Factor...')
-rated_power = 5  # MW
-capacity_factor = compute_capacity_factor(aep, rated_power)
-print(f"Capacity Factor: {capacity_factor:.2%}")
-
+cf_calc = CapacityFactorCalculator(rated_power_mw=5)
+capacity_factor = cf_calc.compute(aep_gwh=aep)
+print(capacity_factor)  # Outputs a float between 0 and 1
 # Additional Function 2: Compute Mean Wind Speeds
 print('Calculating the Mean Wind Speeds...')
 mean_wind_speed_10 = compute_mean_wind_speed(ds, 55.5, 8, 10)
