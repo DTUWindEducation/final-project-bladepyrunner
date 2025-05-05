@@ -3,9 +3,11 @@ import numpy as np
 from pathlib import Path
 from scipy.stats import weibull_min
 from scipy.integrate import quad
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src import load_nc_files, compute_speed_direction, interpolate_wind_data, power_law_calculation, fit_weibull, plot_weibull, plot_windrose, compute_aep, compute_capacity_factor, compute_mean_wind_speed
 from src.Capacity_Factor_Class import CapacityFactorCalculator
-import sys
 from pathlib import Path
 
 # Add the project root (one level up from main.py) to the system path
