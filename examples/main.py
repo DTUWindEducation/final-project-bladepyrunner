@@ -1,7 +1,17 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from scipy.stats import weibull_min
+from scipy.integrate import quad
 from src import load_nc_files, compute_speed_direction, interpolate_wind_data, power_law_calculation, fit_weibull, plot_weibull, plot_windrose, compute_aep, compute_capacity_factor, compute_mean_wind_speed
+from src.Capacity_Factor_Class import CapacityFactorCalculator
+import sys
+from pathlib import Path
+
+# Add the project root (one level up from main.py) to the system path
+project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_root))
+
 # Step 1: Load the wind data from the NetCDF files
 print('Loading the wind data...')
 
@@ -16,14 +26,15 @@ u100 = ds['u100'].values
 clean_u100 = u100[~np.isnan(u100)]
 v100 = ds['v100'].values
 clean_v100 = v100[~np.isnan(v100)]
+
 # Step 2: Calculate the wind speed and direction for all locations
 print('Calculating wind speed and direction...')
 wind_speed_10, wind_dir_10 = compute_speed_direction(clean_u10, clean_v10)
 wind_speed_100, wind_dir_100 = compute_speed_direction(clean_u100, clean_v100)
+
 # Step 3: Finding Wind Speeds inside the target area using interpolation
 print('Interpolating wind speeds to the target area...')
 interpolated_data = interpolate_wind_data(ds, target_lat=55.5, target_lon=7.8)
-
 # Access the variables
 print(f'Wind speed at 10m: {interpolated_data["wind_speed_10"].values}')
 print(f'Wind direction at 10m: {interpolated_data["wind_dir_10"].values}')
@@ -50,18 +61,18 @@ plot_weibull(ds, 55.5, 8, height=10)
 print('Plotting the wind rose...')
 plot_windrose(ds, 55.5, 8, height=10)
 
+
 # Step 8: Calculating the AEP
 print('Calculating the AEP...')
 power_curve_file = Path('inputs/power_curve/NREL_Reference_5MW_126.csv')
 aep = compute_aep(ds, 55.5, 8, power_curve_file, year=2007, turbine='NREL5MW')
 
 print(f"Annual Energy Production (AEP): {aep} GWh")
-
 # Additional Function 1: Compute Capacity Factor
 print('Calculating the Capacity Factor...')
-rated_power = 5  # MW
-capacity_factor = compute_capacity_factor(aep, rated_power)
-print(f"Capacity Factor: {capacity_factor:.2%}")
+cf_calc = CapacityFactorCalculator(rated_power_mw=5)
+capacity_factor = cf_calc.compute(aep_gwh=aep)
+print(capacity_factor)  # Outputs a float between 0 and 1
 
 # Additional Function 2: Compute Mean Wind Speeds
 print('Calculating the Mean Wind Speeds...')
