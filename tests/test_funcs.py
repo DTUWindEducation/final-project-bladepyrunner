@@ -2,6 +2,9 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import pytest
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # adds project root to path
 from src import (
     compute_speed_direction,
     interpolate_wind_data,

@@ -1,4 +1,7 @@
 import pytest
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # adds project root to path
 from src.Capacity_Factor_Class import CapacityFactorCalculator  # Adjust the import path
 
 def test_capacity_factor_calculator():
