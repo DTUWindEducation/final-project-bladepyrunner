@@ -34,29 +34,7 @@ bladepyrunners/
 └── pyproject.toml
 ```
 ## Architecture Diagram
-                       +----------------------+
-                       |   WindData (NetCDF)   |
-                       +----------+-----------+
-                                  |
-         +------------------------v------------------------+
-         |     src/__init__.py (Processing Functions)      |
-         |  - load_nc_files                                |
-         |  - compute_speed_direction                      |
-         |  - interpolate_wind_data                        |
-         |  - fit_weibull / plot_weibull / plot_windrose   |
-         |  - compute_aep / compute_mean_wind_speed        |
-         +------------------------+------------------------+
-                                  |
-                         +--------v--------+
-                         | Capacity_Factor |
-                         | Class (in src/) |
-                         +--------+--------+
-                                  |
-                        +---------v----------+
-                        | examples/main.py    |
-                        +---------------------+
-
-
+![Bladepyrunner Architecture](inputs/BladepyrunnersArchitecture.png)
 
 ## Quick-start guide
 
