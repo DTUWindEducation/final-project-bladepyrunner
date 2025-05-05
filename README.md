@@ -1,23 +1,69 @@
 **Team**: BladePYrunners 
 
-## Overview
+A Python package for assessing wind energy potential at a given location using meteorological data. It includes tools for processing wind data, interpolating it spatially, analyzing it statistically (via Weibull distribution), and calculating key wind turbine performance metrics like **Annual Energy Production (AEP)** and **Capacity Factor**.
 
-**bladepyrunner** is a Python package designed to analyze wind resource data and estimate the performance of wind turbines. Using wind datasets in NetCDF or CSV format, the package computes wind speed distributions, interpolates wind vectors to geographic coordinates, and estimates turbine performance metrics such as:
+This project helps estimate the energy output of wind turbines using environmental data. The analysis includes:
 
-- Annual Energy Production (AEP)
-- Capacity Factor
-- Mean Wind Speed
+- Loading NetCDF wind data
+- Computing wind speed and direction
+- Interpolating wind conditions at specific coordinates
+- Fitting Weibull distributions
+- Plotting wind roses and distributions
+- Calculating AEP and capacity factor
+- Exporting results to a CSV file
 
-It supports interpolation at custom hub heights and includes preconfigured turbine models like the NREL 5MW and 15MW.
+## Project Structure
 
----
+```bash
+bladepyrunners/
+├── inputs/                  # Input data files
+│   ├── power_curve/         # Power curve CSV for NREL 5MW turbine
+│   └── WindData/            # Wind data in NetCDF format
+├── outputs/                 # Output results (e.g., CSV files)
+├── src/                     # Source code
+│   ├── __init__.py          # Main wind processing functions
+│   └── Capacity_Factor_Class.py  # Class to compute capacity factor
+├── tests/                   # Unit tests using pytest
+│   ├── test_funcs.py
+│   └── test_Capacity_Factor_Calculator.py
+├── examples/
+│   └── main.py              # Full pipeline example script
+├── .gitignore
+├── LICENSE
+├── README.md
+└── pyproject.toml
+```
+## Architecture Diagram
+                       +----------------------+
+                       |   WindData (NetCDF)   |
+                       +----------+-----------+
+                                  |
+         +------------------------v------------------------+
+         |     src/__init__.py (Processing Functions)      |
+         |  - load_nc_files                                |
+         |  - compute_speed_direction                      |
+         |  - interpolate_wind_data                        |
+         |  - fit_weibull / plot_weibull / plot_windrose   |
+         |  - compute_aep / compute_mean_wind_speed        |
+         +------------------------+------------------------+
+                                  |
+                         +--------v--------+
+                         | Capacity_Factor |
+                         | Class (in src/) |
+                         +--------+--------+
+                                  |
+                        +---------v----------+
+                        | examples/main.py    |
+                        +---------------------+
+
+
 
 ## Quick-start guide
 
-To install and run the package locally:
+To install and run the package locally: 
 
 ```bash
-git clone https://github.com/your-username/bladepyrunner.git
+git clone https://github.com/DTUWindEducation/final-project-bladepyrunner.git
 cd bladepyrunner
 ``` 
 Create and activate a virtual environment (recommended):
@@ -26,107 +72,67 @@ Create and activate a virtual environment (recommended):
 python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
 ```
-Install the package in editable mode:
+
+Install dependencies:
 ```bash
-pip install -e .
+pip install numpy pandas matplotlib xarray netCDF4 scipy windrose
 ```
-Run the example code:
-```bash
-python -m examples.main
-```
-
-## Architecture
-
-```bash
-bladepyrunner/
-├── inputs/
-│   ├── NREL_Reference_5MW_126.csv
-│   ├── NREL_Reference_15MW_240.csv
-│   └── WindData/
-├── outputs/              # Generated figures and outputs
-├── src/                  # Core package code
-│   ├── __init__.py
-│   └── turbine.py
-├── tests/
-├── examples/             # Usage demos
-│   ├── main.py
-│   ├── FINAL_CODE.py
-│   ├── main_code.ipynb
-│   └── wind_data_class.py
-├── .gitignore
-├── LICENSE
-├── Collaboration.md
-├── README.md
-└── pyproject.toml
-```
-
-### High-Level Workflow
-        +---------------------+
-        |  Wind Data (NetCDF) |
-        +---------+-----------+
-                  |
-                  v
-        +---------+-----------+
-        | load_nc_files()     |
-        | interpolate_wind... |
-        +---------+-----------+
-                  |
-                  v
-     +------------+-------------+
-     |  Wind speed & direction |
-     +------------+-------------+
-                  |
-         +--------+--------+
-         |  Analysis Tools |
-         |  (AEP, Weibull, |
-         |   windrose...)  |
-         +--------+--------+
-                  |
-        +---------+---------+
-        | Visualization &   |
-        | Summary Metrics   |
-        +-------------------+
-
 
 ## Classes and Key Files
+### `Main.py` (in `examples/`)
+Run the complete pipeline with:
 
-### `turbine.py` (in `src/`)
+```bash
+python examples/main.py
+```
+This script will:
 
-Defines the `WindTurbine` class, which models a turbine using its power curve and enables AEP (Annual Energy Production) computation from wind data.
+- Load wind data and compute wind speed & direction
+- Interpolate wind to a specific location
+- Calculate wind at 80m height
+- Fit Weibull distribution and plot it
+- Plot wind rose
+- Compute AEP using the power curve
+- Compute Capacity Factor
 
-#### `WindTurbine` class
-
-- **Constructor**  
-  `WindTurbine(name, hub_height, filepath)`  
-  Initializes the turbine with:
-  - `name` (str): Turbine model name  
-  - `hub_height` (float): Hub height in meters  
-  - `filepath` (str): Path to a CSV file with columns `wind_speed` and `power`
-
-- **`get_power(wind_speeds)`**  
-  Returns the interpolated power output (in kW) for a NumPy array of wind speeds.
-
-- **`compute_AEP(wind_speed_pdf, u_min, u_max, eta=1.0)`**  
-  Computes the **Annual Energy Production (AEP)** using a wind speed probability density function (PDF).
-  - `u_min`, `u_max`: Cut-in and cut-out wind speeds  
-  - `eta`: Turbine availability (default = 1.0)  
-  Returns AEP in **kWh/year**.
-
----
-
-### Functions in `__init__.py` (in `src/`)
+### Functions in `__init__.py` (in `src/`) 
 
 Core functions used across the analysis pipeline:
 
 - `load_nc_files()` – Load NetCDF climate data  
-- `interpolate_wind_data()` – Interpolate wind speeds at a given hub height  
 - `compute_speed_direction()` – Calculate wind speed and direction from U/V components  
-- `fit_weibull()` / `plot_weibull()` – Fit and visualize a Weibull distribution from wind data  
+- `interpolate_wind_data()` – Interpolate wind speeds at a given hub height 
+- `power_law_calculation()` - Calculate wind speed at height z using the power law profile.
+- `fit_weibull()` / `plot_weibull()` – Fit and visualize a Weibull distribution from wind data 
+- `plot_windrose()` – Generate wind rose visualizations of wind patterns 
 - `compute_aep()` / `compute_capacity_factor()` – Estimate energy production and efficiency  
-- `plot_windrose()` – Generate wind rose visualizations of wind patterns
+- `compute_mean_wind_speed()` - Compute the mean wind speed at a specific location and height.
+
+### Core Class: `CapacityFactorCalculator`
+Location: `src/Capacity_Factor_Class.py`
+
+This class computes the Capacity Factor from the AEP and rated power:
+```bash
+from src.Capacity_Factor_Class import CapacityFactorCalculator
+
+cf_calc = CapacityFactorCalculator(rated_power_mw=5)
+cf = cf_calc.compute(aep_gwh=17.32)
+```
+Attributes:
+- rated_power_mw: float — Rated turbine power in MW
+
+Method:
+`compute(aep_gwh)`: Returns capacity factor as `cf = aep_gwh / (rated_power_mw × 8760)`
+
+### Testing
+Tests are implemented with pytest under the `/tests/` folder:
+
+- `test_funcs.py`: Unit tests for `__init__.py` functions
+- `test_Capacity_Factor_Calculator.py`: Tests for the capacity factor class
 
 ## Team contributions
 
-- Rodrigo Sanchez Moreno
 - Max Rosendahl
+- Rodrigo Sanchez Moreno
 - Cristina Fente Gutierrez
+
