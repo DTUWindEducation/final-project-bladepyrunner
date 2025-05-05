@@ -73,6 +73,7 @@ print('Calculating the Capacity Factor...')
 cf_calc = CapacityFactorCalculator(rated_power_mw=5)
 capacity_factor = cf_calc.compute(aep_gwh=aep)
 print(capacity_factor)  # Outputs a float between 0 and 1
+
 # Additional Function 2: Compute Mean Wind Speeds
 print('Calculating the Mean Wind Speeds...')
 mean_wind_speed_10 = compute_mean_wind_speed(ds, 55.5, 8, 10)

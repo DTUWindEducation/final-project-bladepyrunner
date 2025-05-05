@@ -25,20 +25,20 @@ def load_nc_files(data_dir):
 
 def compute_speed_direction(u, v):
     """
-    Computes wind speed and direction from u and v components.
+    Computes wind speed and direction from u and v components (meteorological convention).
 
     Parameters:
     - u (numpy.ndarray): U component of wind (m/s)
     - v (numpy.ndarray): V component of wind (m/s)
 
-    Outputs:
+    Returns:
     - speed (numpy.ndarray): Wind speed (m/s)
-    - direction (numpy.ndarray): Wind direction (degrees)
+    - direction (numpy.ndarray): Wind direction (degrees from north, 0–360)
     """
-    # Calculate wind speed and direction
     speed = np.sqrt(u**2 + v**2)
-    direction = (np.arctan2(-u, -v) * 180 / np.pi) % 360
+    direction = (np.degrees(np.arctan2(-u, -v)) + 360) % 360
     return speed, direction
+
 
 
 def interpolate_wind_data(ds, target_lat, target_lon):

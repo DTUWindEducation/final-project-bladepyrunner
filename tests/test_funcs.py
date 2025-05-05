@@ -2,6 +2,9 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import pytest
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # adds project root to path
 from src import (
     compute_speed_direction,
     interpolate_wind_data,
@@ -15,6 +18,17 @@ from src import (
 )
 
 # ---------- Fixtures ----------
+@pytest.fixture
+def power_curve_file(tmp_path):
+    """Creates a temporary CSV file for the turbine power curve."""
+    df = pd.DataFrame({
+        "wind_speed": [0, 3, 5, 10, 15, 20, 25],
+        "power":      [0, 0, 100, 1000, 3000, 5000, 5000]
+    })
+    file_path = tmp_path / "power_curve.csv"
+    df.to_csv(file_path, index=False)
+    return str(file_path)
+
 @pytest.fixture
 def dummy_dataset():
     time = pd.date_range("2015-01-01", periods=4, freq="H")
@@ -70,16 +84,6 @@ def test_plot_weibull_runs(dummy_dataset):
     except Exception as e:
         pytest.fail(f"plot_weibull raised an exception: {e}")
 
-import pytest
-import xarray as xr
-import numpy as np
-
-# Dummy function for compute_speed_direction, as it's used in the original function
-def compute_speed_direction(u, v):
-    speed = np.sqrt(u**2 + v**2)
-    direction = np.arctan2(v, u) * 180 / np.pi
-    return speed, direction
-
 # Test for plot_windrose
 def test_plot_windrose_runs(dummy_dataset):
     lat, lon = 52.0, 13.0  # Example coordinates
@@ -91,9 +95,6 @@ def test_plot_windrose_runs(dummy_dataset):
     except Exception as e:
         pytest.fail(f"plot_windrose raised an exception: {e}")
 
-import pytest
-import pandas as pd
-import numpy as np
 
 # Dummy data for testing
 def test_compute_aep_valid(dummy_dataset, power_curve_file):
